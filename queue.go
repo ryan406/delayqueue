@@ -94,13 +94,22 @@ func (q *Queue) Put(t time.Time, data interface{}) {
 	slotNum, cycleNum := computeDealTimeCycleNum(t, q.frequency)
 	ele := NewElement(t, cycleNum, data)
 
+	// q.currentSlot + slotNum 可能溢出，溢出的话这里重新计算溢出后的位置
+	slotIndex := q.currentSlot + slotNum
+	var realSlotIndex int
+	if (slotIndex >= SlotsNum) {
+		realSlotIndex = slotIndex % SlotsNum
+	} else {
+		realSlotIndex = slotIndex
+	}
+
 	// 放入指定的slot中
 	// 由于是从当前时间开始计算，所以要从当前slot开始计算，往后数第 slotNum 个slot
 	// 当前slot位置 + 计算下次运行时间的slot
-	if (q.slots[q.currentSlot + slotNum] == nil) {
-		q.slots[q.currentSlot + slotNum] = NewElements()
+	if (q.slots[realSlotIndex] == nil) {
+		q.slots[realSlotIndex] = NewElements()
 	}
-	q.slots[q.currentSlot + slotNum].Append(ele)
+	q.slots[realSlotIndex].Append(ele)
 }
 
 // Run 启动服务
